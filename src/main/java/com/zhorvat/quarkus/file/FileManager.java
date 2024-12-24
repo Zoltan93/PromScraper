@@ -23,7 +23,7 @@ public class FileManager {
     }
 
     public boolean isPodPresent(String podName) {
-        return readFromFile(fileName).contains(podName);
+        return readFromFile().contains(podName);
     }
 
     public void writeToFile(String fileName, String jobDetails) {
@@ -34,7 +34,7 @@ public class FileManager {
         }
     }
 
-    private String readFromFile(String fileName) {
+    public String readFromFile() {
 //        ClassLoader classLoader = this.getClass().getClassLoader();
 //        try (InputStream stream = classLoader.getResourceAsStream(fileName);
 //             BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
