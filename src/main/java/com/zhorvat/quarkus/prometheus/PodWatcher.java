@@ -7,31 +7,30 @@ import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1PodList;
 import io.kubernetes.client.util.Config;
-import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.commons.compress.utils.Sets;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
 public class PodWatcher {
 
-    private final Set<String> pods = Sets.newHashSet();
+    @Inject
+    private JobManager jobManager;
 
-    @Scheduled(cron = "*/5 * * * * *")
-    private void watch() throws IOException, ApiException {
+    @Scheduled(initialDelayString = "10000",fixedRateString = "10000")
+    public void watch() throws IOException, ApiException {
         ApiClient client = Config.defaultClient();
         Configuration.setDefaultApiClient(client);
 
         CoreV1Api api = new CoreV1Api();
         V1PodList list = api.listPodForAllNamespaces().execute();
         for (V1Pod item : list.getItems()) {
-            pods.add(item.getMetadata().getName());
+            jobManager.manage(item.getMetadata().getNamespace());
         }
-    }
-
-    public Set<String> getPods() {
-        return pods;
     }
 }

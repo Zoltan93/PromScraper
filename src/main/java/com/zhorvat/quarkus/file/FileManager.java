@@ -1,6 +1,7 @@
-package com.zhorvat.quarkus.prometheus;
+package com.zhorvat.quarkus.file;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.*;
@@ -9,6 +10,9 @@ import java.io.*;
 public class FileManager {
 
     private final String fileName;
+
+    @Inject
+    private YamlHandler yamlHandler;
 
     public FileManager(
             @ConfigProperty(name = "podFile.name") String fileName
@@ -22,7 +26,7 @@ public class FileManager {
 
     public void writeToFile(String fileName, String jobDetails) {
         try (FileWriter writer = new FileWriter(fileName, true)) {
-            writer.write(jobDetails);
+            yamlHandler.handle(writer, fileName, jobDetails);
         } catch (IOException e) {
             throw new RuntimeException("There was an error, while writing to file", e);
         }

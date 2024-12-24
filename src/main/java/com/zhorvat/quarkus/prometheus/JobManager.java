@@ -1,17 +1,13 @@
 package com.zhorvat.quarkus.prometheus;
 
-import io.quarkus.scheduler.Scheduled;
+import com.zhorvat.quarkus.file.FileManager;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Set;
-
 @ApplicationScoped
 public class JobManager {
 
-    @Inject
-    private PodWatcher podWatcher;
     @Inject
     private FileManager fileManager;
 
@@ -23,15 +19,13 @@ public class JobManager {
         this.fileName = fileName;
     }
 
-    @Scheduled(cron = "*/5 * * * * *")
-    void manage() {
-        Set<String> pods = podWatcher.getPods();
-        pods.stream()
-                .filter(pod -> fileManager.isPodPresent(pod))
-                .forEach(pod -> fileManager.writeToFile(fileName, jobTemplate(pod)));
+    public void manage(String pod) {
+        if (!fileManager.isPodPresent(pod)) {
+            fileManager.writeToFile(fileName, jobTemplate(pod));
+        }
     }
 
-    private String jobTemplate(String jobName) {
+    public static String jobTemplate(String jobName) {
         return String.format("""
                 - job_name: '%s'
                   metrics_path: '/actuator/prometheus'
@@ -41,5 +35,4 @@ public class JobManager {
                       labels:
                         application: 'app'""", jobName);
     }
-
 }
