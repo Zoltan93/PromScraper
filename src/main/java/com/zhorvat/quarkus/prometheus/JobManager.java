@@ -1,6 +1,7 @@
 package com.zhorvat.quarkus.prometheus;
 
 import com.zhorvat.quarkus.file.FileManager;
+import com.zhorvat.quarkus.file.YamlHandler;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -8,20 +9,32 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class JobManager {
 
-    @Inject
-    private FileManager fileManager;
-
     private final String fileName;
 
+    private final FileManager fileManager;
+
+    @Inject
     public JobManager(
-            @ConfigProperty(name = "prometheusFile.name") String fileName
+            @ConfigProperty(name = "prometheusFile.name") String fileName,
+            FileManager fileManager
     ) {
         this.fileName = fileName;
+        this.fileManager = fileManager;
+    }
+
+    public boolean isJobMissingForPod(String pod) {
+        return !fileManager.isPodPresent(pod);
     }
 
     public void manage(String pod) {
-        if (!fileManager.isPodPresent(pod)) {
-            fileManager.writeToFile(fileName, jobTemplate(pod));
+        fileManager.writeToFile(fileName, jobTemplate(pod));
+    }
+
+    public static void main(String[] args) {
+        JobManager manager = new JobManager("src/main/resources/prometheus.yml", new FileManager("prometheus.yml", new YamlHandler()));
+        for (int i = 0; i < 5; i++) {
+
+            manager.manage("asdasda");
         }
     }
 

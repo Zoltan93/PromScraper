@@ -11,13 +11,15 @@ public class FileManager {
 
     private final String fileName;
 
-    @Inject
-    private YamlHandler yamlHandler;
+    private final YamlHandler yamlHandler;
 
+    @Inject
     public FileManager(
-            @ConfigProperty(name = "podFile.name") String fileName
+            @ConfigProperty(name = "podFile.name") String fileName,
+            YamlHandler yamlHandler
     ) {
         this.fileName = fileName;
+        this.yamlHandler = yamlHandler;
     }
 
     public boolean isPodPresent(String podName) {
@@ -33,12 +35,19 @@ public class FileManager {
     }
 
     private String readFromFile(String fileName) {
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        try (InputStream stream = classLoader.getResourceAsStream(fileName);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
-            StringBuilder stringBuilder = new StringBuilder();
+//        ClassLoader classLoader = this.getClass().getClassLoader();
+//        try (InputStream stream = classLoader.getResourceAsStream(fileName);
+//             BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+//            StringBuilder stringBuilder = new StringBuilder();
+//            String line;
+//            while ((line = reader.readLine()) != null) {
+//                stringBuilder.append(line).append("\n");
+//            }
+//            return stringBuilder.toString();
+        try(RandomAccessFile accessFile = new RandomAccessFile(new File(fileName), "rw")) {
+                        StringBuilder stringBuilder = new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = accessFile.readLine()) != null) {
                 stringBuilder.append(line).append("\n");
             }
             return stringBuilder.toString();
