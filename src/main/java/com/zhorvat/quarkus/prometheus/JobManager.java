@@ -8,8 +8,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
-
 @ApplicationScoped
 public class JobManager {
 
@@ -26,16 +24,23 @@ public class JobManager {
         this.fileManager = fileManager;
     }
 
-    public boolean isJobMissingForPod(String pod) {
-        return !fileManager.isPodPresent(pod);
-    }
-
     public void manage(Set<String> ports) {
         fileManager.writeToFile(fileName, jobTemplate(ports));
     }
 
     public static String jobTemplate(Set<String> ports) {
         Set<String> socket = ports.stream().map(port -> String.format("'host.docker.internal:%s'", port)).collect(Collectors.toSet());
+        if (ports.isEmpty()) {
+            return """
+                scrape_configs:
+                    - job_name: 'backend'
+                      metrics_path: '/actuator/prometheus'
+                      scrape_interval: 3s
+                      static_configs:
+                        - targets: []
+                          labels:
+                            application: 'app'""";
+        }
         return String.format("""
                 scrape_configs:
                     - job_name: 'backend'

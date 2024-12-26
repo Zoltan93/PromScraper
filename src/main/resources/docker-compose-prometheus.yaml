@@ -16,3 +16,8 @@ services:
     container_name: metricsexposer
     ports:
       - "8080:8080"
+  metrics-exposer-fallback:
+    image: metricsexposer
+    container_name: metricsexposerfallback
+    ports:
+      - "8081:8080"

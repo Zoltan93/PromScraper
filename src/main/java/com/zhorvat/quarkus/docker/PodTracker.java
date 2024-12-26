@@ -27,16 +27,18 @@ public class PodTracker {
     }
 
     public void track() {
-        Set<Integer> cachedPods = new HashSet<>(existingPodPorts.get());
-        Set<Integer> notRunningPods = new HashSet<>(cachedPods);
-        Set<Integer> runningPods = new HashSet<>(dockerClient.listRunningContainerPublicPorts());
-        Set<Integer> notCachedPods = new HashSet<>(runningPods);
-
-        notRunningPods.removeAll(runningPods);
-        notCachedPods.removeAll(cachedPods);
-
-        handleNewPods(notCachedPods);
-        handleDeletedPods(notRunningPods);
+//        Set<Integer> cachedPods = new HashSet<>(existingPodPorts.get());
+//        Set<Integer> notRunningPods = new HashSet<>(cachedPods);
+//        Set<Integer> runningPods = new HashSet<>(dockerClient.listRunningContainerPublicPorts());
+//        Set<Integer> notCachedPods = new HashSet<>(runningPods);
+//
+//        notRunningPods.removeAll(runningPods);
+//        notCachedPods.removeAll(cachedPods);
+//
+//        handleNewPods(notCachedPods);
+//        handleDeletedPods(notRunningPods);
+        existingPodPorts.get().clear();
+        existingPodPorts.get().addAll(dockerClient.listRunningContainerPublicPorts());
     }
 
     private void handleNewPods(Set<Integer> runningPods) {
@@ -53,7 +55,7 @@ public class PodTracker {
         return dockerClient.listRunningContainerPublicPorts();
     }
 
-    public Supplier<Set<Integer>> getExistingPodPorts() {
+    public Supplier<Set<Integer>> getExistingContainerPorts() {
         return existingPodPorts;
     }
 
