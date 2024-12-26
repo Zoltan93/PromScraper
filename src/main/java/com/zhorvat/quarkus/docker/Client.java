@@ -1,7 +1,6 @@
 package com.zhorvat.quarkus.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.RestartContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerPort;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
@@ -32,8 +31,7 @@ public class Client {
                 Set<String> containerNames = Set.of(container.getNames());
                 for (String containerName : containerNames) {
                     if ("/prometheus".equalsIgnoreCase(containerName)) {
-                        RestartContainerCmd restartContainerCmd = dockerClient.restartContainerCmd(container.getId());
-                        restartContainerCmd.withContainerId(container.getId()).exec();
+                        dockerClient.restartContainerCmd(container.getId()).exec();
                     }
                 }
             }

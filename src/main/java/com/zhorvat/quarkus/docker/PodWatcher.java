@@ -53,20 +53,6 @@ public class PodWatcher {
 
     @Scheduled(initialDelayString = "10000", fixedRateString = "10000")
     public void watch() throws IOException, ApiException {
-//        ApiClient client = Config.defaultClient();
-//        Configuration.setDefaultApiClient(client);
-//
-//        CoreV1Api api = new CoreV1Api();
-//        V1PodList list = api.listPodForAllNamespaces().execute();
-//
-//        Set<String> untrackedPods = new HashSet<>();
-//        for (V1Pod item : list.getItems()) {
-//            String namespace = item.getMetadata().getNamespace();
-//            if (jobManager.isJobMissingForPod(namespace)) {
-//                untrackedPods.add(namespace);
-//            }
-//        }
-//        untrackedPods.forEach(jobManager::manage);
         podTracker.track();
         Set<String> runningPodPorts = podTracker.getExistingPodPorts().get()
                 .stream()
@@ -81,7 +67,6 @@ public class PodWatcher {
             jobManager.manage(ports);
             dockerClient.restartPrometheus();
         }
-//        podTracker.getNewPods().forEach(jobManager::manage);
     }
 
 

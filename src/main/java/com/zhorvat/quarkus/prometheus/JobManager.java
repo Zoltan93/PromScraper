@@ -35,8 +35,7 @@ public class JobManager {
     }
 
     public static String jobTemplate(Set<String> ports) {
-        System.out.println("Should be here");
-        Set<String> socket = ports.stream().map(port -> String.format("'0.0.0.0:%s'", port)).collect(Collectors.toSet());
+        Set<String> socket = ports.stream().map(port -> String.format("'host.docker.internal:%s'", port)).collect(Collectors.toSet());
         return String.format("""
                 scrape_configs:
                     - job_name: 'backend'
