@@ -27,7 +27,7 @@ public class FileManager {
     }
 
     public void writeToFile(String fileName, String jobDetails) {
-        try (FileWriter writer = new FileWriter(fileName, true)) {
+        try (FileWriter writer = new FileWriter(fileName)) {
             yamlHandler.handle(writer, fileName, jobDetails);
         } catch (IOException e) {
             throw new RuntimeException("There was an error, while writing to file", e);
@@ -57,7 +57,7 @@ public class FileManager {
     }
 
     private void writeToFile(String podDetails) {
-        try (FileWriter writer = new FileWriter(fileName, true)) {
+        try (FileWriter writer = new FileWriter(fileName)) {
             writer.write(podDetails);
         } catch (IOException e) {
             throw new RuntimeException("There was an error, while writing to file", e);

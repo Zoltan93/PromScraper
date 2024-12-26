@@ -5,6 +5,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.fasterxml.jackson.databind.type.LogicalType.Collection;
+
 @ApplicationScoped
 public class JobManager {
 
@@ -25,18 +30,21 @@ public class JobManager {
         return !fileManager.isPodPresent(pod);
     }
 
-    public void manage(String pod) {
-        fileManager.writeToFile(fileName, jobTemplate(pod));
+    public void manage(Set<String> ports) {
+        fileManager.writeToFile(fileName, jobTemplate(ports));
     }
 
-    public static String jobTemplate(String jobName) {
+    public static String jobTemplate(Set<String> ports) {
+        System.out.println("Should be here");
+        Set<String> socket = ports.stream().map(port -> String.format("'0.0.0.0:%s'", port)).collect(Collectors.toSet());
         return String.format("""
-                - job_name: '%s'
-                  metrics_path: '/actuator/prometheus'
-                  scrape_interval: 3s
-                  static_configs:
-                    - targets: [ 'host.docker.internal:8081']
-                      labels:
-                        application: 'app'""", jobName);
+                scrape_configs:
+                    - job_name: 'backend'
+                      metrics_path: '/actuator/prometheus'
+                      scrape_interval: 3s
+                      static_configs:
+                        - targets: [%s]
+                          labels:
+                            application: 'app'""", String.join(",", socket));
     }
 }

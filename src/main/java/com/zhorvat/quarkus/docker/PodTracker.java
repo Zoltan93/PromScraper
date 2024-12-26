@@ -13,11 +13,11 @@ public class PodTracker {
 
     private final Client dockerClient;
 
-    private final Supplier<Set<String>> existingPods = Suppliers.memoize(this::runningPods);
+    private final Supplier<Set<Integer>> existingPodPorts = Suppliers.memoize(this::runningPodPorts);
 
-    private final Set<String> newPods = new HashSet<>();
+    private final Set<Integer> newPodPorts = new HashSet<>();
 
-    private final Set<String> oldPods = new HashSet<>();
+    private final Set<Integer> oldPodPorts = new HashSet<>();
 
     @Inject
     public PodTracker(
@@ -27,10 +27,10 @@ public class PodTracker {
     }
 
     public void track() {
-        Set<String> cachedPods = new HashSet<>(existingPods.get());
-        Set<String> notRunningPods = new HashSet<>(cachedPods);
-        Set<String> runningPods = new HashSet<>(dockerClient.listRunningPodIds());
-        Set<String> notCachedPods = new HashSet<>(runningPods);
+        Set<Integer> cachedPods = new HashSet<>(existingPodPorts.get());
+        Set<Integer> notRunningPods = new HashSet<>(cachedPods);
+        Set<Integer> runningPods = new HashSet<>(dockerClient.listRunningContainerPublicPorts());
+        Set<Integer> notCachedPods = new HashSet<>(runningPods);
 
         notRunningPods.removeAll(runningPods);
         notCachedPods.removeAll(cachedPods);
@@ -39,29 +39,29 @@ public class PodTracker {
         handleDeletedPods(notRunningPods);
     }
 
-    private void handleNewPods(Set<String> runningPods) {
-        newPods.clear();
-        newPods.addAll(runningPods);
+    private void handleNewPods(Set<Integer> runningPods) {
+        newPodPorts.clear();
+        newPodPorts.addAll(runningPods);
     }
 
-    private void handleDeletedPods(Set<String> terminatedPods) {
-        oldPods.clear();
-        oldPods.addAll(terminatedPods);
+    private void handleDeletedPods(Set<Integer> terminatedPods) {
+        oldPodPorts.clear();
+        oldPodPorts.addAll(terminatedPods);
     }
 
-    private Set<String> runningPods() {
-        return dockerClient.listRunningPodIds();
+    private Set<Integer> runningPodPorts() {
+        return dockerClient.listRunningContainerPublicPorts();
     }
 
-    public Supplier<Set<String>> getExistingPods() {
-        return existingPods;
+    public Supplier<Set<Integer>> getExistingPodPorts() {
+        return existingPodPorts;
     }
 
-    public Set<String> getNewPods() {
-        return newPods;
+    public Set<Integer> getNewPodPorts() {
+        return newPodPorts;
     }
 
-    public Set<String> getOldPods() {
-        return oldPods;
+    public Set<Integer> getOldPodPorts() {
+        return oldPodPorts;
     }
 }

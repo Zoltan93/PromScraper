@@ -9,7 +9,9 @@ import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class PodWatcher {
@@ -17,25 +19,36 @@ public class PodWatcher {
     private final JobManager jobManager;
     private final PodTracker podTracker;
     private final FileManager fileManager;
+    private final Client dockerClient;
 
     @Inject
     public PodWatcher(
             JobManager jobManager,
             PodTracker podTracker,
-            FileManager fileManager
+            FileManager fileManager,
+            Client dockerClient
     ) {
         this.jobManager = jobManager;
         this.podTracker = podTracker;
         this.fileManager = fileManager;
+        this.dockerClient = dockerClient;
     }
 
     @PostConstruct
     public void syncJobAndPods() {
-        Set<String> runningPods = podTracker.getExistingPods().get();
-        String jobs = fileManager.readFromFile();
-        runningPods.stream()
-                .filter(pod -> !jobs.contains(pod))
-                .forEach(jobManager::manage);
+        Set<String> runningPodPorts = podTracker.getExistingPodPorts().get()
+                .stream()
+                .map(String::valueOf)
+                .collect(Collectors.toSet());
+        String fileContent = fileManager.readFromFile();
+        Set<String> ports = new HashSet<>();
+        runningPodPorts.stream()
+                .filter(port -> !fileContent.contains(port))
+                .forEach(ports::add);
+        if (!ports.isEmpty()) {
+            jobManager.manage(ports);
+            dockerClient.restartPrometheus();
+        }
     }
 
     @Scheduled(initialDelayString = "10000", fixedRateString = "10000")
@@ -55,7 +68,20 @@ public class PodWatcher {
 //        }
 //        untrackedPods.forEach(jobManager::manage);
         podTracker.track();
-        podTracker.getNewPods().forEach(jobManager::manage);
+        Set<String> runningPodPorts = podTracker.getExistingPodPorts().get()
+                .stream()
+                .map(String::valueOf)
+                .collect(Collectors.toSet());
+        String fileContent = fileManager.readFromFile();
+        Set<String> ports = new HashSet<>();
+        runningPodPorts.stream()
+                .filter(port -> !fileContent.contains(port))
+                .forEach(ports::add);
+        if (!ports.isEmpty()) {
+            jobManager.manage(ports);
+            dockerClient.restartPrometheus();
+        }
+//        podTracker.getNewPods().forEach(jobManager::manage);
     }
 
 
