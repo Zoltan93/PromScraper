@@ -11,6 +11,6 @@ public class ScrapeConfigs {
 
     private JobName job_name;
     private MetricsPath metrics_path;
-    private StaticConfigs[] static_configs;
     private ScrapeInterval scrape_interval;
+    private StaticConfigs[] static_configs;
 }

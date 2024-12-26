@@ -1,9 +1,11 @@
 package com.zhorvat.quarkus.docker;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.zhorvat.quarkus.file.FileManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
+import com.zhorvat.quarkus.model.ScrapeConfigs;
 import com.zhorvat.quarkus.prometheus.JobManager;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,9 +13,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ApplicationScoped
 public class PodWatcher {
@@ -41,7 +45,7 @@ public class PodWatcher {
     }
 
     @Scheduled(initialDelayString = "10000", fixedRateString = "10000")
-    public void watch() {
+    public void watch() throws JsonProcessingException {
         podTracker.track();
         Set<String> runningContainerPorts = podTracker.getExistingContainerPorts().get()
                 .stream()
@@ -49,6 +53,7 @@ public class PodWatcher {
                 .collect(Collectors.toSet());
         String fileContent = fileManager.readFromFile();
         Set<String> ports = new HashSet<>(runningContainerPorts);
+        PrometheusJob config = objectMapper.readValue(fileManager.readFromFile(), PrometheusJob.class);
         Set<String> missingPorts = ports.stream()
                 .filter(port -> !fileContent.contains(port))
                 .collect(Collectors.toSet());
@@ -56,6 +61,20 @@ public class PodWatcher {
                 .filter(fileContent::contains)
                 .collect(Collectors.toSet());
         portsStillInFile.removeAll(runningContainerPorts);
+        Set<String> targets = Arrays.stream(config.getScrape_configs())
+                .map(scrape -> Arrays.stream(scrape.getStatic_configs())
+                        .map(staticConfig -> Arrays.stream(staticConfig.getTargets())
+                                .collect(Collectors.toSet()))
+                        .flatMap(Set::stream)
+                        .collect(Collectors.toSet()))
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
+        boolean expiredTargets = targets.containsAll(runningContainerPorts);
+        if (!expiredTargets) {
+            jobManager.manage(ports);
+            dockerClient.restartPrometheus();
+            isEmptyContainerCaseHandled = false;
+        }
         if (!missingPorts.isEmpty()) {
             jobManager.manage(ports);
             dockerClient.restartPrometheus();
@@ -70,12 +89,5 @@ public class PodWatcher {
             dockerClient.restartPrometheus();
             isEmptyContainerCaseHandled = true;
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        File file = new File("src/main/resources/prometheus.yml");
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        PrometheusJob config = objectMapper.readValue(file,PrometheusJob.class);
-        System.out.println("Application config info " + config.toString());
     }
 }

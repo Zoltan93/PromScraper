@@ -2,11 +2,11 @@ package com.zhorvat.quarkus.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.springframework.context.annotation.Bean;
+import jakarta.inject.Singleton;
 
 public class MapperConfig {
 
-    @Bean
+    @Singleton
     public ObjectMapper objectMapper() {
         return new ObjectMapper(new YAMLFactory());
     }
