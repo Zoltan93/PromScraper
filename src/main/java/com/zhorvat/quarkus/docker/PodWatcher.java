@@ -69,8 +69,7 @@ public class PodWatcher {
                         .collect(Collectors.toSet()))
                 .flatMap(Set::stream)
                 .collect(Collectors.toSet());
-        boolean expiredTargets = targets.containsAll(runningContainerPorts);
-        if (!expiredTargets) {
+        if (runningContainerPorts.size() != targets.size()) {
             jobManager.manage(ports);
             dockerClient.restartPrometheus();
             isEmptyContainerCaseHandled = false;
