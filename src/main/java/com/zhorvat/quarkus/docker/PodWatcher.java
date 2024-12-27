@@ -2,22 +2,17 @@ package com.zhorvat.quarkus.docker;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.zhorvat.quarkus.file.FileManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
-import com.zhorvat.quarkus.model.ScrapeConfigs;
 import com.zhorvat.quarkus.prometheus.JobManager;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApplicationScoped
 public class PodWatcher {
@@ -51,7 +46,7 @@ public class PodWatcher {
                 .map(String::valueOf)
                 .collect(Collectors.toSet());
         Set<String> ports = new HashSet<>(runningContainerPorts);
-        PrometheusJob config = objectMapper.readValue(fileManager.readFromFile(), PrometheusJob.class);
+        PrometheusJob config = objectMapper.readValue(fileManager.readFromPrometheusYaml(), PrometheusJob.class);
         Set<String> targets = Arrays.stream(config.getScrape_configs())
                 .map(scrape -> Arrays.stream(scrape.getStatic_configs())
                         .map(staticConfig -> Arrays.stream(staticConfig.getTargets())

@@ -10,7 +10,7 @@ import java.nio.channels.FileChannel;
 @ApplicationScoped
 public class YamlHandler {
 
-    public void handle(FileWriter writer, String fileName, String content) throws IOException {
+    public void writeYamlFile(FileWriter writer, String fileName, String content) throws IOException {
         File inputFile = new File(fileName);
         writeToYamlFile(writer, content);
         removeDanglingCharacter(inputFile);

@@ -11,21 +11,18 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class JobManager {
 
-    private final String fileName;
 
     private final FileManager fileManager;
 
     @Inject
     public JobManager(
-            @ConfigProperty(name = "prometheusFile.name") String fileName,
             FileManager fileManager
     ) {
-        this.fileName = fileName;
         this.fileManager = fileManager;
     }
 
     public void manage(Set<String> ports) {
-        fileManager.writeToFile(fileName, jobTemplate(ports));
+        fileManager.writeToPrometheusYaml(jobTemplate(ports));
     }
 
     public static String jobTemplate(Set<String> ports) {
