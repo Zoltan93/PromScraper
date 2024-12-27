@@ -36,7 +36,7 @@ public class Client {
         }
     }
 
-    public Set<Integer> listRunningContainerPublicPorts() {
+    public Set<String> listRunningContainerPublicPorts() {
         try (DockerClient dockerClient = buildDockerClient(buildDockerClientConfig())) {
             Set<Container> containers = getRunningContainers(dockerClient);
             return containers.stream()
@@ -52,6 +52,7 @@ public class Client {
                                     .collect(Collectors.toSet())
                     )
                     .flatMap(Set::stream)
+                    .map(String::valueOf)
                     .collect(Collectors.toSet());
         } catch (IOException e) {
             throw new RuntimeException("There was an issue with the docker client", e);
