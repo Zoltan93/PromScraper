@@ -4,13 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ScrapeConfigs {
 
-    private JobName job_name;
-    private MetricsPath metrics_path;
-    private ScrapeInterval scrape_interval;
-    private StaticConfigs[] static_configs;
+    private String job_name;
+    private String metrics_path;
+    private String scrape_interval;
+    private List<StaticConfigs> static_configs;
 }

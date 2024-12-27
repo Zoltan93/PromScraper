@@ -10,6 +10,7 @@ import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,10 +49,9 @@ public class ContainerWatcher {
 
     private Set<String> getPrometheusJobTargets() {
         PrometheusJob config = jobMapper.mapFromFile(yamlManager.read());
-        return Arrays.stream(config.getScrape_configs())
-                .map(scrape -> Arrays.stream(scrape.getStatic_configs())
-                        .map(staticConfig -> Arrays.stream(staticConfig.getTargets())
-                                .collect(Collectors.toSet()))
+        return config.getScrape_configs().stream()
+                .map(scrape -> scrape.getStatic_configs().stream()
+                        .map(staticConfig -> new HashSet<>(staticConfig.getTargets()))
                         .flatMap(Set::stream)
                         .collect(Collectors.toSet()))
                 .flatMap(Set::stream)

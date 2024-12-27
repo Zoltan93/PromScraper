@@ -14,9 +14,7 @@ import java.io.IOException;
 @QuarkusTest
 class YamlManagerTests {
 
-    private final YamlManager yamlManager;
-
-    private final String YAML_CONTENT = """
+    private final String FILE_CONTENT = """
             |-
             scrape_configs:
                 - job_name: 'backend'
@@ -27,6 +25,8 @@ class YamlManagerTests {
                       labels:
                         application: 'app'""";
 
+    private final YamlManager yamlManager;
+
     @Inject
     public YamlManagerTests(
             YamlManager yamlManager
@@ -36,7 +36,7 @@ class YamlManagerTests {
 
     @BeforeEach
     void writeYamlContent() {
-        yamlManager.writeToPrometheusYaml(YAML_CONTENT);
+        yamlManager.writeToPrometheusYaml(FILE_CONTENT);
     }
 
     @Test

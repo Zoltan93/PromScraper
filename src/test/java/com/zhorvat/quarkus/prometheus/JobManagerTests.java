@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.not;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Set;
 
 @QuarkusTest
@@ -24,7 +25,7 @@ class JobManagerTests {
 
     @Test
     void givenEmptySetPorts_whenCreatingJobTemplate_thenPortsAreNotIncluded() {
-        String jobTemplate = JobManager.jobTemplate(Set.of());
+        String jobTemplate = JobManager.jobTemplate(Collections.emptySet());
 
         assertThat(jobTemplate, not(containsString("host.docker.internal")));
     }
