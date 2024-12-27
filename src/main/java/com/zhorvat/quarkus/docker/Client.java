@@ -22,19 +22,15 @@ public class Client {
 
     public void restartPrometheus() {
         try (DockerClient dockerClient = buildDockerClient(buildDockerClientConfig())) {
-            Set<Container> containers = new HashSet<>(
-                    dockerClient
-                            .listContainersCmd()
-                            .exec()
+            Set<Container> containers = getRunningContainers(dockerClient);
+            containers.forEach(container ->
+                    Arrays.stream(container.getNames())
+                            .filter(containerName -> containerName.contains("/prometheus"))
+                            .findFirst()
+                            .ifPresent(
+                                    operation -> dockerClient.restartContainerCmd(container.getId()).exec()
+                            )
             );
-            for (Container container : containers) {
-                Set<String> containerNames = Set.of(container.getNames());
-                for (String containerName : containerNames) {
-                    if ("/prometheus".equalsIgnoreCase(containerName)) {
-                        dockerClient.restartContainerCmd(container.getId()).exec();
-                    }
-                }
-            }
         } catch (IOException e) {
             throw new RuntimeException("There was an issue with the docker client", e);
         }
@@ -42,51 +38,32 @@ public class Client {
 
     public Set<Integer> listRunningContainerPublicPorts() {
         try (DockerClient dockerClient = buildDockerClient(buildDockerClientConfig())) {
-            Set<Container> containers = new HashSet<>(
-                    dockerClient
-                            .listContainersCmd()
-                            .exec()
-            );
-            Set<Integer> publicPorts = new HashSet<>();
-            for (Container container : containers) {
-                Set<String> containerNames = Set.of(container.getNames());
-                for (String containerName : containerNames) {
-                    if ("/prometheus".equalsIgnoreCase(containerName)) {
-                        continue;
-                    }
-                    Arrays.stream(container.getPorts())
-                            .filter(port -> Objects.nonNull(port.getPublicPort()))
-                            .map(ContainerPort::getPublicPort)
-                            .forEach(publicPorts::add);
-                }
-            }
-            return publicPorts;
-//            return dockerClient
-//                    .listContainersCmd()
-//                    .exec()
-//                    .stream()
-//                    .map(pod -> {
-//                        Set<ContainerPort> collect = Arrays.stream(pod.getPorts()).collect(Collectors.toSet());
-//                        return collect.stream().map(ContainerPort::getPublicPort).collect(Collectors.toSet());
-//                    })
-//                    .flatMap(Set::stream)
-//                    .collect(Collectors.toSet());
+            Set<Container> containers = getRunningContainers(dockerClient);
+            return containers.stream()
+                    .flatMap(container ->
+                            Arrays.stream(container.getNames())
+                                    .filter(containerName -> !"/prometheus".equalsIgnoreCase(containerName))
+                                    .map(nonPrometheusContainer -> container)
+                    )
+                    .map(container ->
+                            Arrays.stream(container.getPorts())
+                                    .filter(port -> Objects.nonNull(port.getPublicPort()))
+                                    .map(ContainerPort::getPublicPort)
+                                    .collect(Collectors.toSet())
+                    )
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toSet());
         } catch (IOException e) {
             throw new RuntimeException("There was an issue with the docker client", e);
         }
     }
 
-    public Set<String> listRunningPodIds() {
-        try (DockerClient dockerClient = buildDockerClient(buildDockerClientConfig())) {
-            return dockerClient
-                    .listContainersCmd()
-                    .exec()
-                    .stream()
-                    .map(Container::getId)
-                    .collect(Collectors.toSet());
-        } catch (IOException e) {
-            throw new RuntimeException("There was an issue with the docker client", e);
-        }
+    private Set<Container> getRunningContainers(DockerClient dockerClient) {
+        return new HashSet<>(
+                dockerClient
+                        .listContainersCmd()
+                        .exec()
+        );
     }
 
     private DockerClient buildDockerClient(DockerClientConfig config) {
