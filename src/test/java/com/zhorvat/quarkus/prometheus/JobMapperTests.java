@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.zhorvat.quarkus.model.PrometheusJob;
 import com.zhorvat.quarkus.model.ScrapeConfigs;
@@ -55,5 +56,10 @@ class JobMapperTests {
             assertThat(staticConfigs.getTargets().get(0), containsString("host.docker.internal:8081"));
             assertThat(staticConfigs.getLabels().getApplication(), containsString("app"));
         }
+    }
+
+    @Test
+    void givenInvalidObjectAsString_whenMappingToObject_thenExceptionIsThrown() {
+        assertThrows(RuntimeException.class, () -> jobMapper.mapFromFile("dummy-content"));
     }
 }

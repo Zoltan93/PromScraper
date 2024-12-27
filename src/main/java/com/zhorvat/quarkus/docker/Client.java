@@ -59,7 +59,7 @@ public class Client {
         }
     }
 
-    private Set<Container> getRunningContainers(DockerClient dockerClient) {
+    Set<Container> getRunningContainers(DockerClient dockerClient) {
         return new HashSet<>(
                 dockerClient
                         .listContainersCmd()
@@ -67,14 +67,14 @@ public class Client {
         );
     }
 
-    private DockerClient buildDockerClient(DockerClientConfig config) {
+    DockerClient buildDockerClient(DockerClientConfig config) {
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
                 .build();
         return DockerClientImpl.getInstance(config, httpClient);
     }
 
-    private DockerClientConfig buildDockerClientConfig() {
+    DockerClientConfig buildDockerClientConfig() {
         return DefaultDockerClientConfig
                 .createDefaultConfigBuilder()
                 .build();

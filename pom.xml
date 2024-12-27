@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.zhorvat</groupId>
-    <artifactId>quarkus</artifactId>
+    <artifactId>promscraper</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>PromScraper</name>
 
@@ -120,6 +121,72 @@
                 <configuration>
                     <parameters>true</parameters>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.45.1</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>prom/prometheus:latest</name>
+                            <alias>prometheus</alias>
+                            <run>
+                                <namingStrategy>alias</namingStrategy>
+                                <ports>
+                                    <port>9090:9090</port>
+                                </ports>
+                            </run>
+                        </image>
+                        <image>
+                            <name>rabbitmq:latest</name>
+                            <alias>rabbitmq</alias>
+                            <run>
+                                <namingStrategy>alias</namingStrategy>
+                                <ports>
+                                    <port>9091:9091</port>
+                                </ports>
+                            </run>
+                        </image>
+<!--                        <image>-->
+<!--                            <name>promscraper:${project.version}</name>-->
+<!--                            <alias>PromScraper</alias>-->
+<!--                            <build>-->
+<!--                                <dockerFileDir>${project.basedir}</dockerFileDir>-->
+<!--                            </build>-->
+<!--                            <run>-->
+<!--                                <namingStrategy>alias</namingStrategy>-->
+<!--                                <dependsOn>-->
+<!--                                    <container>prom/prometheus</container>-->
+<!--                                </dependsOn>-->
+<!--                                <links>-->
+<!--                                    <link>prometheus</link>-->
+<!--                                </links>-->
+<!--                                <ports>-->
+<!--                                    <port>8080:8080</port>-->
+<!--                                </ports>-->
+<!--                            </run>-->
+<!--                        </image>-->
+                    </images>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>start</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>stop</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
