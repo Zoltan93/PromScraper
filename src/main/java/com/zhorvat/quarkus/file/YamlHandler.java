@@ -1,6 +1,8 @@
 package com.zhorvat.quarkus.file;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -10,11 +12,22 @@ import java.nio.channels.FileChannel;
 @ApplicationScoped
 public class YamlHandler {
 
-    public void writeYamlFile(FileWriter writer, String fileName, String content) throws IOException {
-        File inputFile = new File(fileName);
-        writeToYamlFile(writer, content);
-        removeDanglingCharacter(inputFile);
-        copyFileContent(inputFile);
+    private final String fileName;
+
+    @Inject
+    public YamlHandler(
+            @ConfigProperty(name = "prometheusFile.name") String fileName
+    ) {
+        this.fileName = fileName;
+    }
+
+    public void writeToPrometheusYaml(String content) throws IOException {
+        try (FileWriter writer = new FileWriter(fileName)) {
+            File inputFile = new File(fileName);
+            writeToYamlFile(writer, content);
+            removeDanglingCharacter(inputFile);
+            copyFileContent(inputFile);
+        }
     }
 
     private static void writeToYamlFile(FileWriter writer, String content) {
@@ -31,13 +44,11 @@ public class YamlHandler {
 
     private static void removeDanglingCharacter(File inputFile) throws IOException {
         File tempFile = new File("src/main/resources/prometheusTemp.yml");
-
         BufferedReader reader = new BufferedReader(new FileReader(inputFile));
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(tempFile));
 
         String lineToRemove = "|-";
         String currentLine;
-
         while ((currentLine = reader.readLine()) != null) {
             // trim newline when comparing with lineToRemove
             String trimmedLine = currentLine.trim();

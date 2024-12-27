@@ -26,8 +26,8 @@ public class FileManager {
     }
 
     public void writeToPrometheusYaml(String jobDetails) {
-        try (FileWriter writer = new FileWriter(fileName)) {
-            yamlHandler.writeYamlFile(writer, fileName, jobDetails);
+        try {
+            yamlHandler.writeToPrometheusYaml(jobDetails);
         } catch (IOException e) {
             throw new RuntimeException("There was an error, while writing to file", e);
         }
