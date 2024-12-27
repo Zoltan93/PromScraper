@@ -2,49 +2,60 @@ package com.zhorvat.quarkus.file;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 
 @ApplicationScoped
-public class YamlHandler {
+public class YamlManager {
 
     private final String fileName;
 
     @Inject
-    public YamlHandler(
+    public YamlManager(
             @ConfigProperty(name = "prometheusFile.name") String fileName
     ) {
         this.fileName = fileName;
     }
 
-    public void writeToPrometheusYaml(String content) throws IOException {
-        try (FileWriter writer = new FileWriter(fileName)) {
-            File inputFile = new File(fileName);
-            writeToYamlFile(writer, content);
-            removeDanglingCharacter(inputFile);
-            copyFileContent(inputFile);
+    public void writeToPrometheusYaml(String content) {
+        try {
+            writeToYaml(content);
+            removeDanglingCharacter();
+        } catch (IOException e) {
+            throw new RuntimeException("There was an issue, while writing to the file", e);
         }
     }
 
-    private static void writeToYamlFile(FileWriter writer, String content) {
+    public String read() {
+        try {
+            return FileUtils.readFileToString(new File(fileName), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("There was an issue, while reading from the file", e);
+        }
+    }
+
+    void writeToYaml(String content) throws IOException {
         DumperOptions options = new DumperOptions();
         options.setIndent(2);
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setIndicatorIndent(2);
         options.setIndentWithIndicator(true);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.LITERAL);
-
-        Yaml yaml = new Yaml(options);
-        yaml.dump(content, writer);
+        try (FileWriter writer = new FileWriter(fileName)) {
+            Yaml yaml = new Yaml(options);
+            yaml.dump(content, writer);
+        }
     }
 
-    private static void removeDanglingCharacter(File inputFile) throws IOException {
+    void removeDanglingCharacter() throws IOException {
         File tempFile = new File("src/main/resources/prometheusTemp.yml");
-        BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(tempFile));
 
         String lineToRemove = "|-";
@@ -52,17 +63,20 @@ public class YamlHandler {
         while ((currentLine = reader.readLine()) != null) {
             // trim newline when comparing with lineToRemove
             String trimmedLine = currentLine.trim();
-            if (trimmedLine.equals(lineToRemove)) continue;
-            bufferedWriter.write(currentLine + System.getProperty("line.separator"));
+            if (trimmedLine.equals(lineToRemove)) {
+                continue;
+            }
+            bufferedWriter.write(currentLine + System.lineSeparator());
         }
         bufferedWriter.close();
         reader.close();
+        copyFileContent();
     }
 
-    private static void copyFileContent(File inputFile) throws IOException {
+    void copyFileContent() throws IOException {
         File tempFile = new File("src/main/resources/prometheusTemp.yml");
         try (FileChannel src = new FileInputStream(tempFile).getChannel();
-             FileChannel dest = new FileOutputStream(inputFile).getChannel()) {
+             FileChannel dest = new FileOutputStream(fileName).getChannel()) {
             dest.transferFrom(src, 0, src.size());
             src.close();
             dest.close();

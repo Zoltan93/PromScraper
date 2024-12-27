@@ -1,6 +1,6 @@
 package com.zhorvat.quarkus.docker;
 
-import com.zhorvat.quarkus.file.FileManager;
+import com.zhorvat.quarkus.file.YamlManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
 import com.zhorvat.quarkus.prometheus.JobMapper;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,17 +18,17 @@ public class ContainerWatcher {
 
     private static boolean isEmptyContainerCaseHandled = false;
 
-    private final FileManager fileManager;
+    private final YamlManager yamlManager;
     private final Client dockerClient;
     private final JobMapper jobMapper;
 
     @Inject
     public ContainerWatcher(
-            FileManager fileManager,
+            YamlManager yamlManager,
             Client dockerClient,
             JobMapper jobMapper
     ) {
-        this.fileManager = fileManager;
+        this.yamlManager = yamlManager;
         this.dockerClient = dockerClient;
         this.jobMapper = jobMapper;
     }
@@ -47,7 +47,7 @@ public class ContainerWatcher {
     }
 
     private Set<String> getPrometheusJobTargets() {
-        PrometheusJob config = jobMapper.mapFromFile(fileManager.readFromPrometheusYaml());
+        PrometheusJob config = jobMapper.mapFromFile(yamlManager.read());
         return Arrays.stream(config.getScrape_configs())
                 .map(scrape -> Arrays.stream(scrape.getStatic_configs())
                         .map(staticConfig -> Arrays.stream(staticConfig.getTargets())
@@ -59,7 +59,7 @@ public class ContainerWatcher {
     }
 
     private void handleContainerChanges(Set<String> runningContainerPorts) {
-        fileManager.writeToPrometheusYaml(jobTemplate(runningContainerPorts));
+        yamlManager.writeToPrometheusYaml(jobTemplate(runningContainerPorts));
         dockerClient.restartPrometheus();
     }
 }
