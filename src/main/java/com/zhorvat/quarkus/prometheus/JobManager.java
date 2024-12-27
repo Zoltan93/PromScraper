@@ -29,18 +29,10 @@ public class JobManager {
     }
 
     public static String jobTemplate(Set<String> ports) {
-        Set<String> socket = ports.stream().map(port -> String.format("'host.docker.internal:%s'", port)).collect(Collectors.toSet());
-        if (ports.isEmpty()) {
-            return """
-                scrape_configs:
-                    - job_name: 'backend'
-                      metrics_path: '/actuator/prometheus'
-                      scrape_interval: 3s
-                      static_configs:
-                        - targets: []
-                          labels:
-                            application: 'app'""";
-        }
+        Set<String> sockets = ports
+                .stream()
+                .map(port -> String.format("'host.docker.internal:%s'", port))
+                .collect(Collectors.toSet());
         return String.format("""
                 scrape_configs:
                     - job_name: 'backend'
@@ -49,6 +41,6 @@ public class JobManager {
                       static_configs:
                         - targets: [%s]
                           labels:
-                            application: 'app'""", String.join(",", socket));
+                            application: 'app'""", String.join(",", sockets));
     }
 }
