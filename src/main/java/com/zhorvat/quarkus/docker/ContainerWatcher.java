@@ -1,5 +1,7 @@
 package com.zhorvat.quarkus.docker;
 
+import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
+
 import com.zhorvat.quarkus.file.YamlManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
 import com.zhorvat.quarkus.prometheus.JobMapper;
@@ -10,8 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
 
 @ApplicationScoped
 public class ContainerWatcher {
