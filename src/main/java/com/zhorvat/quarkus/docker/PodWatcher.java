@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zhorvat.quarkus.file.FileManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
-import com.zhorvat.quarkus.prometheus.JobManager;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,11 +13,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
+
 @ApplicationScoped
 public class PodWatcher {
 
-    private final JobManager jobManager;
-    private final PodTracker podTracker;
     private final FileManager fileManager;
     private final Client dockerClient;
     private final ObjectMapper objectMapper;
@@ -26,14 +25,10 @@ public class PodWatcher {
 
     @Inject
     public PodWatcher(
-            JobManager jobManager,
-            PodTracker podTracker,
             FileManager fileManager,
             Client dockerClient,
             ObjectMapper objectMapper
     ) {
-        this.jobManager = jobManager;
-        this.podTracker = podTracker;
         this.fileManager = fileManager;
         this.dockerClient = dockerClient;
         this.objectMapper = objectMapper;
@@ -41,7 +36,7 @@ public class PodWatcher {
 
     @Scheduled(initialDelayString = "10000", fixedRateString = "10000")
     public void watch() throws JsonProcessingException {
-        Set<String> runningContainerPorts = podTracker.getExistingContainerPorts()
+        Set<String> runningContainerPorts = dockerClient.listRunningContainerPublicPorts()
                 .stream()
                 .map(String::valueOf)
                 .collect(Collectors.toSet());
@@ -56,11 +51,11 @@ public class PodWatcher {
                 .flatMap(Set::stream)
                 .collect(Collectors.toSet());
         if (runningContainerPorts.size() != targets.size()) {
-            jobManager.manage(ports);
+            fileManager.writeToPrometheusYaml(jobTemplate(ports));
             dockerClient.restartPrometheus();
             isEmptyContainerCaseHandled = false;
         } else if (runningContainerPorts.isEmpty() && !isEmptyContainerCaseHandled) {
-            jobManager.manage(ports);
+            fileManager.writeToPrometheusYaml(jobTemplate(ports));
             dockerClient.restartPrometheus();
             isEmptyContainerCaseHandled = true;
         }
