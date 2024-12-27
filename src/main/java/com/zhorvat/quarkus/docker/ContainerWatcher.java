@@ -8,14 +8,13 @@ import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
 
 @ApplicationScoped
-public class PodWatcher {
+public class ContainerWatcher {
 
     private static boolean isEmptyContainerCaseHandled = false;
 
@@ -24,7 +23,7 @@ public class PodWatcher {
     private final JobMapper jobMapper;
 
     @Inject
-    public PodWatcher(
+    public ContainerWatcher(
             FileManager fileManager,
             Client dockerClient,
             JobMapper jobMapper
