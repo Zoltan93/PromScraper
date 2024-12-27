@@ -7,8 +7,8 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     # extra_hosts injects a dns to the /etc/hosts file, so that these services will have a resolvable IP address
-#    extra_hosts:
-#      - 'host.docker.internal:host-gateway'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 # OR
 #      - 'host.docker.internal:172.17.0.1'
 

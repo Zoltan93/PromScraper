@@ -46,21 +46,12 @@ public class PodWatcher {
 
     @Scheduled(initialDelayString = "10000", fixedRateString = "10000")
     public void watch() throws JsonProcessingException {
-        podTracker.track();
-        Set<String> runningContainerPorts = podTracker.getExistingContainerPorts().get()
+        Set<String> runningContainerPorts = podTracker.getExistingContainerPorts()
                 .stream()
                 .map(String::valueOf)
                 .collect(Collectors.toSet());
-        String fileContent = fileManager.readFromFile();
         Set<String> ports = new HashSet<>(runningContainerPorts);
         PrometheusJob config = objectMapper.readValue(fileManager.readFromFile(), PrometheusJob.class);
-        Set<String> missingPorts = ports.stream()
-                .filter(port -> !fileContent.contains(port))
-                .collect(Collectors.toSet());
-        Set<String> portsStillInFile = ports.stream()
-                .filter(fileContent::contains)
-                .collect(Collectors.toSet());
-        portsStillInFile.removeAll(runningContainerPorts);
         Set<String> targets = Arrays.stream(config.getScrape_configs())
                 .map(scrape -> Arrays.stream(scrape.getStatic_configs())
                         .map(staticConfig -> Arrays.stream(staticConfig.getTargets())
@@ -73,16 +64,6 @@ public class PodWatcher {
             jobManager.manage(ports);
             dockerClient.restartPrometheus();
             isEmptyContainerCaseHandled = false;
-        }
-        if (!missingPorts.isEmpty()) {
-            jobManager.manage(ports);
-            dockerClient.restartPrometheus();
-            isEmptyContainerCaseHandled = false;
-        } else if (!portsStillInFile.isEmpty()) {
-            jobManager.manage(ports);
-            dockerClient.restartPrometheus();
-            isEmptyContainerCaseHandled = false;
-            // Handle case, when there are no containers running
         } else if (runningContainerPorts.isEmpty() && !isEmptyContainerCaseHandled) {
             jobManager.manage(ports);
             dockerClient.restartPrometheus();
