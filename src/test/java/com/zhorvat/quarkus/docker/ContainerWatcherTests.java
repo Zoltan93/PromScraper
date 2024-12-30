@@ -89,6 +89,21 @@ class ContainerWatcherTests {
         waitForFileCondition(not(containsString("9091")));
     }
 
+    @Test
+    void givenNoContainerRunning_whenContainerWatcherIsCalled_thenAdequateTargetIsPopulated() {
+        DockerClient dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
+        Set<Container> runningContainers = client.getRunningContainers(dockerClient);
+        stopContainer(dockerClient, runningContainers, "/rabbitmq");
+        Awaitility.with()
+                .pollDelay(4, TimeUnit.SECONDS)
+                .atMost(20, TimeUnit.SECONDS)
+                .await()
+                .until(() -> client.getRunningContainers(dockerClient).size() == 1);
+        containerWatcher.watch();
+        waitForFileCondition(not(containsString("9091")));
+    }
+
+
     public void stopContainer(
             DockerClient dockerClient,
             Set<Container> containers,
