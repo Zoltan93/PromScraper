@@ -42,9 +42,10 @@ class ClientTests {
         dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
         Instant containerBeforeRestart = getContainerUptime(getPrometheusContainerId());
         client.restartPrometheus();
-        Awaitility
-                .await()
+        Awaitility.with()
                 .pollDelay(4, TimeUnit.SECONDS)
+                .atMost(20, TimeUnit.SECONDS)
+                .await()
                 .untilAsserted(() ->  assertThat(containerBeforeRestart, lessThan(getContainerUptime(getPrometheusContainerId()))));
     }
 

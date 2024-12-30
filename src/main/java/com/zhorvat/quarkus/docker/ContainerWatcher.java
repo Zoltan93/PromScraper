@@ -5,6 +5,8 @@ import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
 import com.zhorvat.quarkus.file.YamlManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
 import com.zhorvat.quarkus.prometheus.JobMapper;
+import io.quarkus.arc.lookup.LookupIfProperty;
+import io.quarkus.arc.lookup.LookupUnlessProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,7 +36,7 @@ public class ContainerWatcher {
         this.jobMapper = jobMapper;
     }
 
-    @Scheduled(initialDelayString = "5000", fixedRateString = "5000")
+    @Scheduled(cron = "${schedulerun.cron: */5 * * ? * *}")
     public void watch() {
         Set<String> runningContainerPorts = dockerClient.listRunningContainerPublicPorts();
         Set<String> targets = getPrometheusJobTargets();
