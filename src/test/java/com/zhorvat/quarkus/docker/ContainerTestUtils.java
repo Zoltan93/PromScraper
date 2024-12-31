@@ -3,7 +3,6 @@ package com.zhorvat.quarkus.docker;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import lombok.Getter;
-import org.junit.jupiter.api.BeforeAll;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -12,11 +11,10 @@ import java.util.stream.Collectors;
 
 class ContainerTestUtils {
 
-    private static DockerClient dockerClient;
-    private static Client client;
+    private static final DockerClient dockerClient;
+    private static final Client client;
 
-    @BeforeAll
-    static void initializeClients() {
+    static {
         client = new Client();
         dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
     }

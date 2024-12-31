@@ -1,9 +1,6 @@
 package com.zhorvat.quarkus.docker;
 
 import static com.zhorvat.quarkus.docker.ContainerTestUtils.DockerContainerState.EXITED;
-import static com.zhorvat.quarkus.docker.ContainerTestUtils.getContainersInState;
-import static com.zhorvat.quarkus.docker.ContainerTestUtils.getRunningContainers;
-import static com.zhorvat.quarkus.docker.ContainerTestUtils.stopContainer;
 import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
