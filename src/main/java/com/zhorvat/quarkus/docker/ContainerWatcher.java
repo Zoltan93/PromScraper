@@ -5,21 +5,16 @@ import static com.zhorvat.quarkus.prometheus.JobManager.jobTemplate;
 import com.zhorvat.quarkus.file.YamlManager;
 import com.zhorvat.quarkus.model.PrometheusJob;
 import com.zhorvat.quarkus.prometheus.JobMapper;
-import io.quarkus.arc.lookup.LookupIfProperty;
-import io.quarkus.arc.lookup.LookupUnlessProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ContainerWatcher {
-
-    private static boolean isEmptyContainerCaseHandled = false;
 
     private final YamlManager yamlManager;
     private final Client dockerClient;
@@ -42,10 +37,6 @@ public class ContainerWatcher {
         Set<String> targets = getPrometheusJobTargets();
         if (runningContainerPorts.size() != targets.size()) {
             handleContainerChanges(runningContainerPorts);
-            isEmptyContainerCaseHandled = false;
-        } else if (runningContainerPorts.isEmpty() && !isEmptyContainerCaseHandled) {
-            handleContainerChanges(runningContainerPorts);
-            isEmptyContainerCaseHandled = true;
         }
     }
 
