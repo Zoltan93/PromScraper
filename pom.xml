@@ -150,25 +150,6 @@
                                 </ports>
                             </run>
                         </image>
-<!--                        <image>-->
-<!--                            <name>promscraper:${project.version}</name>-->
-<!--                            <alias>PromScraper</alias>-->
-<!--                            <build>-->
-<!--                                <dockerFileDir>${project.basedir}</dockerFileDir>-->
-<!--                            </build>-->
-<!--                            <run>-->
-<!--                                <namingStrategy>alias</namingStrategy>-->
-<!--                                <dependsOn>-->
-<!--                                    <container>prom/prometheus</container>-->
-<!--                                </dependsOn>-->
-<!--                                <links>-->
-<!--                                    <link>prometheus</link>-->
-<!--                                </links>-->
-<!--                                <ports>-->
-<!--                                    <port>8080:8080</port>-->
-<!--                                </ports>-->
-<!--                            </run>-->
-<!--                        </image>-->
                     </images>
                 </configuration>
                 <executions>
@@ -176,7 +157,7 @@
                         <id>start</id>
                         <phase>pre-integration-test</phase>
                         <goals>
-                            <goal>build</goal>
+                            <goal>stop</goal>
                             <goal>start</goal>
                         </goals>
                     </execution>
