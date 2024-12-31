@@ -12,6 +12,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,12 +21,15 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @QuarkusTest
 class ContainerWatcherTests {
 
     private final YamlManager yamlManager;
     private final Client client;
+    private DockerClient dockerClient;
     private final ContainerWatcher containerWatcher;
 
     @Inject
@@ -43,8 +47,8 @@ class ContainerWatcherTests {
     void clearPrometheusTargets() {
         yamlManager.writeToPrometheusYaml(jobTemplate(Collections.emptySet()));
 
-        DockerClient dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
-        Optional<Container> isContainerInExitedState = dockerClient
+        dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
+        Supplier<Set<Container>> containersInExitedState = () -> dockerClient
                 .listContainersCmd()
                 .withShowAll(true)
                 .exec()
@@ -52,15 +56,9 @@ class ContainerWatcherTests {
                 .filter(container ->
                         "exited".equalsIgnoreCase(container.getState())
                 )
-                .findFirst();
-        if (isContainerInExitedState.isPresent()) {
-            startContainer(dockerClient, isContainerInExitedState.get());
-            Awaitility.with()
-                    .pollDelay(4, TimeUnit.SECONDS)
-                    .atMost(20, TimeUnit.SECONDS)
-                    .await()
-                    .until(() -> client.getRunningContainers(dockerClient).size() == 2);
-        }
+                .collect(Collectors.toSet());
+        containersInExitedState.get().forEach(container -> startContainer(dockerClient, container));
+        waitForCondition(containersInExitedState.get().isEmpty());
     }
 
     @Test
@@ -76,12 +74,10 @@ class ContainerWatcherTests {
         containerWatcher.watch();
         waitForFileCondition(containsString("9091"));
 
-        DockerClient dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
-
         Set<Container> runningContainers = client.getRunningContainers(dockerClient);
         stopContainer(dockerClient, runningContainers, "/rabbitmq");
         Awaitility.with()
-                .pollDelay(4, TimeUnit.SECONDS)
+                .pollDelay(2, TimeUnit.SECONDS)
                 .atMost(20, TimeUnit.SECONDS)
                 .await()
                 .until(() -> client.getRunningContainers(dockerClient).size() == 1);
@@ -91,14 +87,14 @@ class ContainerWatcherTests {
 
     @Test
     void givenNoContainerRunning_whenContainerWatcherIsCalled_thenAdequateTargetIsPopulated() {
-        DockerClient dockerClient = client.buildDockerClient(client.buildDockerClientConfig());
         Set<Container> runningContainers = client.getRunningContainers(dockerClient);
         stopContainer(dockerClient, runningContainers, "/rabbitmq");
         Awaitility.with()
-                .pollDelay(4, TimeUnit.SECONDS)
+                .pollDelay(2, TimeUnit.SECONDS)
                 .atMost(20, TimeUnit.SECONDS)
                 .await()
                 .until(() -> client.getRunningContainers(dockerClient).size() == 1);
+//        waitForCondition(client.getRunningContainers(dockerClient).size() == 1);
         containerWatcher.watch();
         waitForFileCondition(not(containsString("9091")));
     }
@@ -126,24 +122,19 @@ class ContainerWatcherTests {
         dockerClient.startContainerCmd(containerToStart.getId()).exec();
     }
 
-    public Optional<String> isContainerRunning(
-            Set<Container> containers,
-            String containerToStart
-    ) {
-        return containers.stream().map(container ->
-                        Arrays.stream(container.getNames())
-                                .filter(containerToStart::equalsIgnoreCase)
-                                .findFirst()
-                )
-                .flatMap(Optional::stream)
-                .findFirst();
-    }
-
     private void waitForFileCondition(Matcher<String> condition) {
         Awaitility.with()
                 .pollDelay(4, TimeUnit.SECONDS)
                 .atMost(20, TimeUnit.SECONDS)
                 .await()
                 .untilAsserted(() -> assertThat(yamlManager.read(), condition));
+    }
+
+    private void waitForCondition(Boolean condition) {
+        Awaitility.with()
+                .pollDelay(2, TimeUnit.SECONDS)
+                .atMost(20, TimeUnit.SECONDS)
+                .await()
+                .until(() -> condition);
     }
 }
